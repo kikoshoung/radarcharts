@@ -1,4 +1,4 @@
 radarchart
 ==========
 
-A special chart with radar impression. 
+Canvas charts with radar impression.
