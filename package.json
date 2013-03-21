@@ -1,0 +1,9 @@
+{
+  "name": "radarcharts",
+  "version": "0.1.0",
+  "devDependencies": {
+    "grunt": "~0.4.0",
+    "grunt-contrib-uglify": "~0.1.2",
+    "grunt-contrib-concat": "~0.1.1"
+  }
+}

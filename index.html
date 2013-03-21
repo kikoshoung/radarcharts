@@ -1,0 +1,361 @@
+<!doctype html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8;">
+		<title>Radarcharts Guide</title>
+		<link rel="stylesheet" type="text/css" href="css/base.css">
+		<link rel="stylesheet" type="text/css" href="css/frame.css">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+		<script type="text/javascript" src="js/radarcharts.js"></script>
+	</head>
+	<body>
+		<div class="content-wrapper">
+			<h1 class="mb-l">雷达表（radarcharts）</h1>
+			<p>使用 Canvas 技术实现的一种雷达展现形式的图表。</p>
+			<p>Canvas charts with radar impression.</p>
+			<div class="block">
+				<h2>开胃小菜</h2>
+				<p>相信很多人都玩过实况足球，在选择球员的时候你都能看到这样一个雷达表，里面是球员各方面的属性值，你可以通过这个东西比较多个球员之间的明显差别。下面是我模仿实况足球的雷达表利用 Canvas 实现的 HTML5 雷达表。</p>
+				<p>先看一个例子，你可以比较一下 <a class="player-classic" id="messi">梅西</a> 和 <a class="player-classic" id="puyol">普约尔</a> 这两位球员的各项属性值：（点击球员名试一试）</p>
+				<div id="container-classic"></div>
+			</div>
+			<div class="block">
+				<h2>使用方法</h2>
+				<ol class="decorated">
+					<li>在页面内引入 <a target="_blank" href="/js/component/radarcharts.js">radarcharts.js</a>，方法如下：<br/>&lt;script type="text/javascript" src="your own path/radarcharts.js"&gt;&lt;/script&gt;</li>
+					<li>然后，在页面内放置你的 DOM 容器，如：&lt;div id="container-classic"&gt;&lt;/div&gt;</li>
+					<li>最后，构造一个 Radarcharts 实例：<br/>
+						<pre>
+							<code>
+/* 创建两位球员的数据 */
+var data1 = [
+		{name: "速度", value: 95},
+		{name: "力量", value: 70},
+		{name: "平衡", value: 95},
+		{name: "盘带", value: 95},
+		{name: "射门", value: 90},
+		{name: "防守", value: 70}
+	],
+	data2 = [
+		{name: "速度", value: 70},
+		{name: "力量", value: 90},
+		{name: "平衡", value: 85},
+		{name: "盘带", value: 70},
+		{name: "射门", value: 70},
+		{name: "防守", value: 95}
+	];
+
+/* 初始雷达表 */
+var radarchartsClassic = new Radarcharts({
+	renderTo: $("#container-classic"),
+	size: "s",
+	items: data1
+});
+
+/* 给触发按钮绑定事件 */
+$(".player-classic").bind("click", function(){
+	var id = $(this).attr("id"),
+		data;
+	if(id == "messi"){
+		data = data1;
+	} else {
+		data = data2;
+	}
+	radarchartsClassic.drawBdr(data);
+});
+							</code>
+						</pre>
+					</li>
+				</ol>
+			</div>
+			<div class="block">
+				<h2>关于自定义</h2>
+				<p>一个灵活的组件必须能满足各种场景需求，Radarcharts为了满足大家的各种需求，特设置了以下配置参数：</p>
+				<pre>
+					<code>
+/* 可以在初始的时候传入config参数，以下列出了能够修改的所有属性 */
+config: {
+	maxValue: 100, // max value of radarcharts
+	padding: 0.2, // padding value of radarcharts
+	bg: {
+		colors: ["#404040", "#5f5f5f"], // background stripe colors, also can be [value, value, ...]
+		num: 5, // number of stripes
+		type: 0 // stripe type, fill or stroke, 0: fill, 1: stroke
+	},
+	border: {
+		width: 2, // charts line width
+		color: "#adfc58" // charts line color
+	},
+	title: {
+		font: "bold 12px arial", // font style of charts attributes' name 
+		color: "black" // font color charts attributes' name 
+	},
+	size: { // charts size, small | medium | large
+		s: [200, 200],
+		m: [300, 300],
+		l: [400, 400]
+	},
+	duration: 300 // animation duration
+}
+					<code>
+				</pre>
+			</div>
+			<div class="block">
+				<h4>自定义示例1</h4>
+				<a class="player-1 mr-m" id="messi">梅西</a><a class="player-1" id="puyol">普约尔</a>
+				<div id="container1"></div>
+				<pre>
+					<code>
+var radarcharts1 = new Radarcharts({
+	renderTo: $("#container1"),
+	size: "m",
+	items: data1,
+	config: { // optional
+		bg: {
+			colors: ["#ccc"],
+			num: 10,
+			type: 1
+		},
+		border: {
+			width: 1,
+			color: "333"
+		}
+	}
+});
+$(".player-1").bind("click", function(){
+	var id = $(this).attr("id"),
+		data;
+	if(id == "messi"){
+		data = data1;
+	} else {
+		data = data2;
+	}
+	radarcharts1.drawBdr(data);
+});
+					</code>
+				</pre>
+			</div>
+			<div class="block">
+				<h4>自定义示例2</h4>
+				<a class="player-2 mr-m" id="messi">梅西</a><a class="player-2" id="puyol">普约尔</a>
+				<div id="container2"></div>
+				<pre>
+					<code>
+var radarcharts2 = new Radarcharts({
+	renderTo: $("#container2"),
+	size: "m",
+	items: data1,
+	maxValue: 100,
+	config: { // optional
+		title: {
+			font: "bold 16px Microsoft Yahei",
+			color: "red"
+		},
+		bg: {
+			colors: ["#c4c5bd", "#809176", "#50a2c2"],
+			num: 3,
+			type: 0
+		}
+	}
+});
+$(".player-2").bind("click", function(){
+	var id = $(this).attr("id"),
+		data;
+	if(id == "messi"){
+		data = data1;
+	} else {
+		data = data2;
+	}
+	radarcharts2.drawBdr(data);
+});
+					</code>
+				</pre>
+			</div>
+			<div class="block">
+				<h4>自定义示例3</h4>
+				<a class="player-3 mr-m" id="messi">梅西</a><a class="player-3" id="puyol">普约尔</a>
+				<div id="container3"></div>
+				<pre>
+					<code>
+var data3 = [
+		{name: "速度", value: 95},
+		{name: "盘带", value: 95},
+		{name: "防守", value: 70}
+	],
+	data4 = [
+		{name: "速度", value: 70},
+		{name: "盘带", value: 70},
+		{name: "防守", value: 95}
+	];
+var radarcharts3 = new Radarcharts({
+	renderTo: $("#container3"),
+	size: "m",
+	items: data3,
+	config: { // optional
+		title: {
+			font: "bold 20px ",
+			color: "black"
+		},
+		duration: 1000
+	}
+});
+$(".player-3").bind("click", function(){
+	var id = $(this).attr("id"),
+		data;
+	if(id == "messi"){
+		data = data3;
+	} else {
+		data = data4;
+	}
+	radarcharts3.drawBdr(data);
+});
+					</code>
+				</pre>
+			</div>
+		</div>
+
+		<script type="text/javascript">
+			var data1 = [
+					{name: "速度", value: 95},
+					{name: "力量", value: 70},
+					{name: "平衡", value: 95},
+					{name: "盘带", value: 95},
+					{name: "射门", value: 90},
+					{name: "防守", value: 70}
+				],
+				data2 = [
+					{name: "速度", value: 70},
+					{name: "力量", value: 90},
+					{name: "平衡", value: 85},
+					{name: "盘带", value: 70},
+					{name: "射门", value: 70},
+					{name: "防守", value: 95}
+				],
+				data3 = [
+					{name: "速度", value: 95},
+					{name: "盘带", value: 95},
+					{name: "防守", value: 70}
+				],
+				data4 = [
+					{name: "速度", value: 70},
+					{name: "盘带", value: 70},
+					{name: "防守", value: 95}
+				];
+
+			var radarchartsClassic = new Radarcharts({
+				renderTo: $("#container-classic"),
+				size: "s",
+				items: data1
+			});
+			$(".player-classic").bind("click", function(){
+				var id = $(this).attr("id"),
+					data;
+				if(id == "messi"){
+					data = data1;
+				} else {
+					data = data2;
+				}
+				radarchartsClassic.drawBdr(data);
+			});
+
+			var radarcharts1 = new Radarcharts({
+				renderTo: $("#container1"),
+				size: "m",
+				items: data1,
+				config: { // optional
+					bg: {
+						colors: ["#ccc"],
+						num: 10,
+						type: 1
+					},
+					border: {
+						width: 1,
+						color: "333"
+					}
+				}
+			});
+			$(".player-1").bind("click", function(){
+				var id = $(this).attr("id"),
+					data;
+				if(id == "messi"){
+					data = data1;
+				} else {
+					data = data2;
+				}
+				radarcharts1.drawBdr(data);
+			});
+
+			var radarcharts2 = new Radarcharts({
+				renderTo: $("#container2"),
+				size: "m",
+				items: data1,
+				maxValue: 100,
+				config: { // optional
+					title: {
+						font: "bold 16px Microsoft Yahei",
+						color: "red"
+					},
+					bg: {
+						colors: ["#c4c5bd", "#809176", "#50a2c2"],
+						num: 3,
+						type: 0
+					}
+				}
+			});
+			$(".player-2").bind("click", function(){
+				var id = $(this).attr("id"),
+					data;
+				if(id == "messi"){
+					data = data1;
+				} else {
+					data = data2;
+				}
+				radarcharts2.drawBdr(data);
+			});
+
+			var radarcharts3 = new Radarcharts({
+				renderTo: $("#container3"),
+				size: "m",
+				items: data3,
+				config: { // optional
+					title: {
+						font: "bold 20px ",
+						color: "black"
+					},
+					duration: 1000
+				}
+			});
+			$(".player-3").bind("click", function(){
+				var id = $(this).attr("id"),
+					data;
+				if(id == "messi"){
+					data = data3;
+				} else {
+					data = data4;
+				}
+				radarcharts3.drawBdr(data);
+			});
+
+			function codeareaHandler(area){
+				area.each(function(){
+					var thisArea = $(this),
+						codeStr = $.trim(thisArea.text()),
+						codeRows = codeStr.match(/((.*)\n|\n?(.*)\n?)/g),
+						codeRows = codeRows.slice(0, codeRows.length - 1), // ugly method!
+						len = codeRows.length,
+						rowList = '<ul class="code-row-list">',
+						handledCodeStr = '';
+
+					for(var i = 1; i <= len; i++){
+						handledCodeStr += '<p><span class="num">'+ i +'</span>'+ codeRows[i - 1] +'</p>';
+					}
+					rowList += '</ul>';
+					handledCodeStr = '<code>'+ handledCodeStr +'</code>';
+					thisArea.html(handledCodeStr);
+				})
+			}
+			codeareaHandler($('body').find('pre'));
+		</script>
+	</body>
+</html>
