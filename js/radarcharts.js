@@ -1,288 +1,865 @@
-var Radarcharts = function(options){
-	this.options = options;
-	this.init();
-}
+(function(){
+	// some constant
+	var FREQUENCY = 20, // frequency of animation (HZ), [20 - 40] is recommended, in my opinion, 20HZ is smooth enough
+		OPACITY = [0.4, 0.8, 1],
+		NOT_SUPPORTED_TIP = 'Sorry, canvas is not supported in your browser.', // if not supported in one's browser, this tip will be shown
+		VERTICES_FAULT_TOLERANCE_VALUE = 1; // (px)
 
-Radarcharts.prototype = {
-	firstTime: true,
-	freq: 40,
-	config: {
-		maxValue: 100, // max value of radarcharts
-		padding: 0.2, // padding value of radarcharts
-		bg: {
-			colors: ["#404040", "#5f5f5f"], // background stripe colors, also can be [value, value, ...]
-			num: 5, // number of stripes
-			type: 0 // stripe type, fill or stroke, 0: fill, 1: stroke
-		},
-		border: {
-			width: 2, // charts line width
-			color: "#adfc58" // charts line color
-		},
-		title: {
-			font: "bold 12px arial", // charts attributes' name font style
-			color: "black" // charts attributes' name font color
-		},
-		size: { // charts size, small | medium | large
-			s: [200, 200],
-			m: [300, 300],
-			l: [400, 400]
-		},
-		duration: 200 // animation duration /ms
-	},
-	clone: function(obj){
-		return JSON.parse(JSON.stringify(obj));
-	},
-	init: function(){
-		var bgCan = this.bgCan = $('<canvas>抱歉，您使用的浏览器不支持Canvas。</canvas>');
-		var bdrCan = this.bdrCan = $('<canvas>抱歉，您使用的浏览器不支持Canvas。</canvas>');
-		this.extConfig = {};
-		$.extend(this.extConfig, this.config, this.options.config);
-		this.bgCtx = bgCan[0].getContext("2d");
-		this.bdrCtx = bdrCan[0].getContext("2d");
-		this.renderCanvas();
-		this.drawBg();
-		this.drawBdr();
-	},
-	renderCanvas: function(){
-		var bgCan = this.bgCan,
-			bdrCan = this.bdrCan,
-			config = this.extConfig,
-			options = this.options,
-			wrapper = $('<div></div>'),
-			renderTo = this.options.renderTo,
-			width = this.width = config.size[options.size][0],
-			height = this.height = config.size[options.size][1];
+	// default config of chart
+	var CONFIG = {
 
-		wrapper.css({
-			position: "relative",
-			width: width,
-			height: height
-		})
-		bgCan.css({
-			position: "absolute",
-			zIndex: 10
-		}).attr({
-			width: width,
-			height: height
-		});
-		bdrCan.css({
-			position: "absolute",
-			zIndex: 11
-		}).attr({
-			width: width,
-			height: height
-		});
-		this.centerPoint = [width / 2, height / 2];
-		
-		renderTo.append(wrapper)
-		wrapper.append(bgCan);
-		wrapper.append(bdrCan);
-	},
-	drawBg: function(){
-		var ctx = this.bgCtx,
-			config = this.extConfig,
-			bgConfig = config.bg,
-			radius = this.radius = this.width * (1 - config.padding) / 2,
-			radiusStep = radius / bgConfig.num;
+		// style of chart
+		style: {
+			font: 'normal 12px Arial',
+			// a standard font style will be like this
+			// --> font: 'italic bold 20px/30px Arial',
 			
-		for(var i = 0; i < bgConfig.num; i++){
-			var radius = this.radius,
-				bgVertices = this.getVertices(radius - i * radiusStep),
-				items = this.options.items;
+			color: 'red'
+		},
 
-			if(i == 0) this.maxVertices = bgVertices;
+		// chart size, [width, height], '100%' | 300 | '300px'
+		size: ['100%', '100%'],
+
+		// chart title options
+		title: {
+			text: 'Radar chart title',
+			width: '60%',
+			font: 'normal 20px Arial',
+			color: 'black',
+			padding: '10px 10px',
+			margin: '0 20%',
+			textAlign: 'center',
+			border: '1px solid #a5a5a5',
+			borderRadius: '5px'
+		},
+
+		// chart legend options
+		legend: {
+			color: 'black',
+			border: '1px solid #a5a5a5',
+			borderRadius: '5px',
+			margin: '0 20%',
+			padding: 0
+		},
+
+		// chart's padding value (percentage)
+		paddingPercentage: 0.2,
+
+		// background options
+		background: {
+			// background type, 'circle' | 'polygon'
+			type: 'polygon',
+
+			// background stripes colors, [value, value, ...]
+			colors: ['#e5e5e5'],
+
+			// background stripes' border
+			border: {
+				width: '1px',
+				color: '#a5a5a5'
+			},
+
+			// number of background stripes in a chart
+			num: 1
+		},
+
+		// axis options
+		axis: {
+			width: '1px',
+			color: '#a5a5a5'
+		},
+
+		// marker options
+		marker: {
+			radius: '4px',
+			border: {
+				width: '2px',
+				color: 'white'
+			}
+		},
+
+		// header options
+		header: {
+			color: 'black',
+			offset: '5px'
+		},
+
+		// animation duration of the plot line (millisecond)
+		duration: 300,
+
+		// ploter options
+		ploter: {
+			width: '2px',
+			colors: ['#289af3', '#E4780B', '#71bbf5', '#FDA30D', '#134973', '#E4390B', '#365873', '#FD1C0D', '#207ac0', 
+					'#FC8A4B', '#1953dc', '#7B2C00', '#1d24fa', '#7B4425', '#19badc', '#C84700' ,'#1dfae5', '#fb5900']
+		},
+
+		// tooltip options
+		tooltip: {
+			width: '100px',
+			border: '2px solid transparent',
+			borderRadius: '5px',
+			format: '<b>{series.name}</b><br/>{point.name}: {point.value}'
+		}
+	};
+
+	// create a html element with param we passed in
+	var createElement = function(name, attr, innerHTML){
+		var elem = document.createElement(name);
+
+		if(attr){
+			for(var i in attr){
+				elem.setAttribute(i, attr[i]);
+			}
+		}
+		if(innerHTML) {
+			elem.innerHTML = innerHTML;
+		}
+
+		return elem;
+	}
+
+	// clone an object deeply
+	var clone = function(original){
+		if(typeof original != 'object' || original.nodeType) return original;
+
+		var clonedObject = original.constructor === Array ? [] : {};
+
+		for(var i in original){
+			clonedObject[i] = arguments.callee(original[i])
+		}
+
+		return clonedObject;
+	}
+
+	// merge two objects 
+	var merge = function(master, defaults){
+		var merged = clone(defaults);
+
+		for(var j in master){
+			if(merged[j] instanceof Object && master[j]){
+				if(merged[j] instanceof Array){
+					merged[j] = clone(master[j]);
+				} else {
+					merged[j] = arguments.callee(master[j], merged[j]);
+				}
+			} else {
+				merged[j] = master[j];
+			}
+		}
+		return merged;
+	}
+
+	// get an array that contains vertices' position value
+	var getVertices = function(options, obj, radius){
+		var vertices = [],
+			centerPoint = obj.centerPoint,
+			len = obj.dataLength, 
+			padding = options.paddingPercentage,
+			radius = radius ? radius : 0,
+			size = options.size;
+
+		for(var i = 0; i < len; i++){
+			var degrees = i * (360 / len),
+				r = typeof radius === 'object' ? radius[i] : radius,
+				x = sin(degrees) * r + centerPoint[0],
+				y = cos(degrees) * r + centerPoint[1];
+
+			vertices.push([x, size[1] - y])
+		}
+		return vertices;
+	}
+
+	// get the incremental gap value in every single frame
+	var getVerticesGap = function(options, ploter, seriesIndex){
+		var res = [],
+			series = options.series[seriesIndex],
+			dataLength = ploter.dataLength,
+			preSeries = options.preSeries,
+			padding = options.paddingPercentage,
+			size = options.size,
+			centerPoint = ploter.centerPoint,
+			frameNum = ploter.frameNum,
+			scale = (centerPoint[0] < centerPoint[1] ? centerPoint[0] : centerPoint[1]) / options.maxValue,
+			xGap,
+			yGap;
+
+		preSeries = preSeries ? preSeries[seriesIndex] : {name: series.name, data: getInitPreSeries(series, ploter)};
+		for(var i = 0; i < dataLength; i++){
+			var	degrees = i * (360 / dataLength),
+				gap = (series.data[i] - preSeries.data[i]) / ploter.frameNum * scale;
+			
+			xGap = sin(degrees) * gap * (1 - padding);
+			yGap = cos(degrees) * gap * (1 - padding);
+			res.push([xGap, - yGap]);
+		}
+		return res;
+	}
+
+	var getRadius = function(centerPoint, padding){
+		return (centerPoint[0] < centerPoint[1] ? centerPoint[0] : centerPoint[1]) * (1 - padding);
+	}
+
+	var sin = function(degrees){
+		return Math.sin(Math.PI * degrees / 180);
+	}
+	var cos = function(degrees){
+		return Math.cos(Math.PI * degrees / 180);
+	}
+
+	// ensure that 'value' is an int type value
+	var parseSeries = function(series){
+		var seriesLength = series.length,
+			dataLength = series[0].data.length;
+
+		for(var j = 0; j < seriesLength; j++){
+			for(var i = 0; i < dataLength; i++){
+				series[j].data[i] = parseFloat(series[j].data[i]);
+			}
+		}
+	}
+
+	// parse the size value of options, '100.5' --> 100.5, '100.5px' --> 100.5
+	var getSize = function(value, wrapperWidth){
+		if(typeof value === 'string'){
+			if(value.charAt(value.length - 1) === '%'){
+				return parseFloat(value) / 100 * wrapperWidth;
+			} else {
+				return parseFloat(value);
+			}
+		} 
+		return value;
+	}
+
+	var getRadiusArr = function(options, obj, seriesIndex){
+		if(!options.preSeries){
+			return 0;
+		}
+		var preSeries = options.preSeries[seriesIndex],
+			dataLength = obj.dataLength,
+			centerPoint = obj.centerPoint,
+			res = [],
+			scale = (centerPoint[0] < centerPoint[1] ? centerPoint[0] : centerPoint[1]) / options.maxValue * (1 - options.paddingPercentage);
+		for(var i = 0; i < dataLength; i++){
+			res.push(preSeries.data[i] * scale);
+		}
+		return res;
+	}
+
+	var getInitPreSeries = function(series, ploter){
+		var res = [],
+			dataLength = ploter.dataLength;
+
+		for(var i = 0; i < dataLength; i++){
+			res.push(0);
+		}
+		return res;
+	}
+
+	var getPosition = function(elem){
+		var position = [elem.offsetLeft, elem.offsetTop],
+			offsetParent = elem.offsetParent,
+			tem;
+
+		if(offsetParent) {
+			tem = getPosition(offsetParent);
+			position[0] += tem[0];
+			position[1] += tem[1];
+		}	
+
+		return position;
+	}
+
+	// form cssText for an element, so we can change the style attribute in one time
+	var getCssText = function(obj){
+		var map = {
+				width: 'width',
+				height: 'height',
+				color: 'color',
+				font: 'font',
+				border: 'border',
+				padding: 'padding',
+				margin: 'margin',
+				borderRadius: 'border-radius',
+				textAlign: 'text-align'
+			},
+			cssText = '';
+
+		for(var i in obj){
+			if(map[i]){
+				cssText += map[i] +': '+ obj[i] +';';
+			}
+		}
+
+		return cssText;
+	}
+
+	var hasClass = function(elem, cls) {
+        return elem.className.match(new RegExp('(\\s|^)' + cls + '(\\s|$)'));
+    }
+
+    var addClass = function(elem, cls) {
+        if (!hasClass(elem, cls)) elem.className += " " + cls;
+    }
+
+    var removeClass = function(elem, cls) {
+        if (hasClass(elem, cls)) {
+            var reg = new RegExp('(\\s|^)' + cls + '(\\s|$)');
+            elem.className = elem.className.replace(reg, ' ');
+        }
+    }
+
+	var isMouseOnPoint = function(point, mouse, options){
+		var pointX = Math.round(point[0]),
+			pointY = Math.round(point[1]),
+			mouseX = mouse[0],
+			mouseY = mouse[1],
+			range = options.marker ? parseInt(options.marker.radius) + parseInt(options.marker.border.width) : 5;
+
+		if(mouseX <= pointX + range && mouseX >= pointX - range && mouseY <= pointY + range && mouseY >= pointY - range){
+
+			return true;
+		} else return false;
+	}
+
+	var validateParam = function(options){
+		var paramList = ['categories', 'series', 'maxValue'],
+			len = paramList.length;
+		for(var i = 0; i < len; i++){
+			if(!options[paramList[i]]) throw 'Error: Can not find param "'+ paramList[i] +'" in options.';
+		}
+	}
+
+	// Cavas Class
+	var Canvas = function(){}
+	Canvas.prototype = {
+		init: function(){
+			this.cacheVariable();
+			this.draw();
+		},
+		cacheVariable: function(){
+			var options = this.options;
+			this.size = options.size;
+			this.elem = createElement('canvas', {
+				width: this.size[0],
+				height: this.size[1]
+			}, NOT_SUPPORTED_TIP);
+
+			this.options.wrapper.appendChild(this.elem);
+
+			this.ctx = this.elem.getContext('2d');
+			this.frameNum = Math.ceil(options.duration / FREQUENCY);
+			this.centerPoint = [this.size[0] / 2, this.size[1] / 2];
+			this.dataLength = options.series[0].data.length;
+		}
+	}
+
+	// Background Class
+	var Background = function(options){
+		this.options = options;
+		this.init();
+	}
+	Background.prototype = new Canvas;
+	Background.prototype.draw = function(){
+		var options = this.options;
+
+		if(options.background) this.drawBackground();
+		if(options.axis) this.drawAxis();
+		if(options.header) this.drawHeader();
+	}
+	Background.prototype.redraw = function(data){
+		this.elem.getContext('2d').clearRect(0, 0, this.size[0], this.size[1]);
+		this.options.data = data;
+		this.draw();
+	}
+	Background.prototype.drawBackground = function(){
+		var options = this.options,
+			ctx = this.ctx,
+			size = this.size,
+			bgOpt = options.background,
+			centerPoint = [size[0] / 2, size[1] / 2],
+			stripesNum = bgOpt.num ? bgOpt.num : bgOpt.colors.length,
+			radius = getRadius(centerPoint, options.paddingPercentage),
+			bgType = bgOpt.type === 'circle' ? 'circle' : 'polygon';
+
+		for(var i = 0; i < stripesNum; i++){
+			var vertices = getVertices(options, this, radius * (stripesNum - i) / stripesNum),
+				len = vertices.length;
 
 			ctx.beginPath();
-			ctx.moveTo(bgVertices[0][0], bgVertices[0][1]);
-
-			for(var j = 0; j < bgVertices.length; j++){
-				var next = j + 1;
-				if(next == bgVertices.length){
-					next = 0;
-				} 
-				ctx.lineTo(bgVertices[next][0], bgVertices[next][1]);
-				ctx.strokeStyle = "transparent";
-
-				if(i == bgConfig.num - 1){
-					var maxX = this.maxVertices[j][0],
-						maxY = this.maxVertices[j][1],
-						centerPoint = this.centerPoint,
-						baseline = "middle",
-						align;
-
-					if(maxX > centerPoint[0] - 1 && maxX < centerPoint[0] + 1){
-						align = "center";
-						if(maxY > centerPoint[0]) baseline = "top";
-						else baseline = "bottom";
-					} else if(maxX > centerPoint[0]){
-						align = "left";
-					} else if(maxX < centerPoint[0]){
-						align = "right";
-					} 
-					ctx.textAlign = align;
-					ctx.textBaseline = baseline;
-					ctx.font = config.title.font;
-		        	ctx.fillStyle = config.title.color;
-		        	ctx.fillText(items[j].name, maxX, maxY);
+			if(bgType === 'polygon') {
+				ctx.moveTo(vertices[0][0], vertices[0][1]);
+				for(var j = 0; j < len; j++){
+					var next = j + 1 != len ? j + 1 : 0;
+					ctx.lineTo(vertices[next][0], vertices[next][1]);
 				}
-			}
-
-			ctx.fillStyle = bgConfig.colors[(i % bgConfig.colors.length)];
-			if(bgConfig.type){
-				ctx.strokeStyle = bgConfig.colors[0];
-				ctx.stroke();
 			} else {
+				ctx.arc(centerPoint[0], centerPoint[1], radius * (stripesNum - i) / stripesNum, 0, 2 * Math.PI);
+			}
+			ctx.closePath();
+
+
+			if(bgOpt.colors){
+				ctx.fillStyle = bgOpt.colors[i % bgOpt.colors.length];
 				ctx.fill();
 			}
+			if(bgOpt.border){
+				ctx.strokeStyle = bgOpt.border.color ? bgOpt.border.color : 'transparent';
+				ctx.lineWidth = bgOpt.border.width ? parseInt(bgOpt.border.width) : 1;
+				ctx.stroke();
+			}
+
+		}
+	},
+	Background.prototype.drawHeader = function(){
+		var options = this.options,
+			ctx = this.ctx,
+			size = this.size,
+			centerPoint = this.centerPoint,
+			radius = options.header.offset ? parseInt(options.header.offset) + getRadius(centerPoint, options.paddingPercentage) : getRadius(centerPoint, options.paddingPercentage),
+			len = this.dataLength,
+			vertices = getVertices(options, this, radius),
+			baseline = 'middle',
+			align = 'center',
+			tolerance = VERTICES_FAULT_TOLERANCE_VALUE;
+
+		for(var i = 0; i < len; i++){
+			var x = vertices[i][0],
+				y = vertices[i][1];
+
+			if(x > centerPoint[0] - tolerance && x < centerPoint[0] + tolerance){
+				align = 'center';
+			} else if(x > centerPoint[0] - tolerance){
+				align = 'left';
+			} else if(x < centerPoint[0] + tolerance){
+				align = 'right';
+			}
+			if(y > centerPoint[1] - tolerance && y < centerPoint[1] + tolerance){
+				baseline = 'middle';
+			} else if(y > centerPoint[1] - tolerance){
+				baseline = 'top';
+			} else if(y < centerPoint[1] + tolerance){
+				baseline = 'bottom';
+			}  
 			
+			ctx.textBaseline = baseline;
+			ctx.textAlign = align;
+			ctx.font = options.header.font;
+		    ctx.fillStyle = options.header.color;
+		    ctx.fillText(options.categories[i], vertices[i][0], vertices[i][1]);
+		}
+	}
+	Background.prototype.drawAxis = function(){
+		var options = this.options,
+			ctx = this.ctx,
+			size = this.size,
+			centerPoint = this.centerPoint,
+			len = this.dataLength,
+			vertices = getVertices(options, this, getRadius(centerPoint, options.paddingPercentage)),
+			axisOpt = options.axis;
+
+		for(var i = 0; i < len; i++){
+			ctx.beginPath();
+			ctx.moveTo(centerPoint[0], centerPoint[1]);
+			ctx.lineTo(vertices[i][0], vertices[i][1]);
+			ctx.strokeStyle = axisOpt.color;
+			ctx.lineWidth = parseInt(axisOpt.width);
+			ctx.stroke();
 			ctx.closePath();
 		}
-	},
-	drawBdr: function(param){
-		if(this.timer) clearInterval(this.timer);
-		param ? this.firstTime = false : this.firstTime = true;
-		if(this.firstTime) clearInterval(this.timer);
-		var items = param ? param : this.options.items,
-			initItems = this.initItems = this.getInitItems(),
-			itemPoints = this.getItemVertices(items), // 属性值对应的点
-			increaseSteps = this.getSteps(initItems, items),
-			config = this.extConfig,
-			me = this;
-
-		this.timer = setInterval(function(){
-			var ctx = me.bdrCtx;
-			--me.frames;
-			if(me.frames >= 0){
-				ctx.clearRect(0, 0, me.width, me.height);
-				ctx.beginPath();
-
-				for(var i = 0; i < initItems.length; i++){
-					initItems[i].value = initItems[i].value + increaseSteps[i];
-				}
-
-				itemPoints = me.getItemVertices(initItems)
-				ctx.moveTo(itemPoints[0][0], itemPoints[0][1]);
-				
-				for(var i = 0; i < itemPoints.length; i++){
-					var next = i + 1;
-					if(next == itemPoints.length){
-						next = 0;
-					} 
-					ctx.lineTo(itemPoints[next][0], itemPoints[next][1]);
-					ctx.strokeStyle = config.border.color;
-					ctx.lineWidth = config.border.width;
-					ctx.stroke();
-				}
-				ctx.closePath();
-			} else {
-				clearInterval(me.timer);
-			}
-		}, me.freq);
-	},
-	drawBdrFrame: function(param){
-		var me = this;
-		param ? me.firstTime = false : me.firstTime = true;
-		if(me.timer) clearInterval(me.timer);
-		var items = param ? param : me.options.items,
-			initItems = me.initItems = me.getInitItems(),
-			itemPoints = me.getItemVertices(items), // 属性值对应的点
-			increaseSteps = me.getSteps(initItems, items); 
-			ctx = me.bdrCtx,
-			config = this.extConfig;
-
-		me.timer = setInterval(function(){
-			--me.frames;
-			if(me.frames >= 0){
-				ctx.clearRect(0, 0, me.width, me.height);
-				ctx.beginPath();
-
-				for(var i = 0; i < initItems.length; i++){
-					initItems[i].value = initItems[i].value + increaseSteps[i];
-				}
-
-				itemPoints = me.getItemVertices(initItems)
-				ctx.moveTo(itemPoints[0][0], itemPoints[0][1]);
-				
-				for(var i = 0; i < itemPoints.length; i++){
-					var next = i + 1;
-					if(next == itemPoints.length){
-						next = 0;
-					} 
-					ctx.lineTo(itemPoints[next][0], itemPoints[next][1]);
-					ctx.strokeStyle = config.border.color;
-					ctx.stroke();
-				}
-				ctx.closePath();
-			} else {
-				clearInterval(me.timer);
-			}
-		}, me.freq);
-	},
-	getVertices: function(radius){
-		var	items = this.options.items,
-			len = items.length,
-			centerPoint = this.centerPoint,
-			vertices = [];
-
-		for(var i = 0; i < len; i++){
-			var angle = i * (360 / len) + 180,
-				x = Math.sin(Math.PI * angle / 180) * radius + centerPoint[0],
-				y = Math.cos(Math.PI * angle / 180) * radius + centerPoint[1];
-
-			vertices.push([x, y])
-		}
-		return vertices;
-	},
-	getInitItems: function(){
-		var len = this.options.items.length,
-			items = [];
-
-		if(this.firstTime){
-			for(var i = 0; i < len; i++){
-				items.push({
-					value: 0
-				});
-			}
-		} else {
-			items = this.clone(this.initItems);
-		}
-		return items;
-	},
-	getItemVertices: function(items){
-		var maxVertices = this.maxVertices,
-			vertices = [];
-				
-		for(var i = 0; i < maxVertices.length; i++){
-			var percentage = items[i].value / this.extConfig.maxValue,
-				centerPoint = this.centerPoint,
-				ctx = this.ctx,
-				radius = this.radius,
-				angle = i * (360 / maxVertices.length) + 180,
-				x = Math.sin(Math.PI * angle / 180) * radius * percentage + centerPoint[0],
-				y = Math.cos(Math.PI * angle / 180) * radius * percentage + centerPoint[1];
-
-			vertices.push([x, y]);
-		}
-		return vertices;
-	},
-	getSteps: function(now, next){
-		var steps = [];
-			len = now.length,
-			duration = this.extConfig.duration,
-			freq = this.freq,
-			frames = this.frames = Math.ceil(duration / freq);
-
-		for(var i = 0; i < len; i++){
-			var step = (next[i].value - now[i].value) / frames;
-			steps.push(step);
-		}
-
-		return steps;
 	}
-}
+
+	// Ploter Class
+	var Ploter = function(options){
+		this.options = options;
+		this.init();
+	}
+	// prototype of chart object's constructor
+	Ploter.prototype = new Canvas;
+	Ploter.prototype.draw = function(){
+		var options = this.options,
+			frameNum = this.frameNum,
+			dataLength = this.dataLength,
+			series = options.series,
+			seriesLength = series.length,
+			legendEnableArr = options.legendEnableArr,
+			size = this.size,
+			me = this,
+			verticesGap = [],
+			radiusArr = [],
+			preVertices = [],
+			verticesByRound;
+
+		for(var k = 0; k < seriesLength; k++){
+			radiusArr.push(getRadiusArr(options, this, k));
+			preVertices.push(getVertices(options, this, radiusArr[k]));
+			verticesGap.push(getVerticesGap(options, this, k));
+		}
 
 
+		if(this.timer) clearInterval(this.timer);
+		parseSeries(series)
+		this.timer = setInterval(function(){
+			me.animationEnded = false;
+			frameNum--;
+			if(frameNum < 0) {
+				// cache for redraw animation
+				options.preSeries = series;
 
+				// cache for tooltip
+				options.vertices = preVertices;
+
+				// tell the mousemove handler whether the animation is ended
+				me.animationEnded = true;
+
+				clearInterval(me.timer);
+				return;
+			}
+
+			me.ctx.clearRect(0, 0, size[0], size[1]);
+			// loop in series
+			for(var i = 0; i < seriesLength; i++){
+				if(legendEnableArr[i]){
+					verticesByRound = [];
+					// loop in every 'data' of current series
+					for(var j = 0; j < dataLength; j++){
+						preVertices[i][j][0] += verticesGap[i][j][0];
+						preVertices[i][j][1] += verticesGap[i][j][1];
+						verticesByRound.push([preVertices[i][j][0], preVertices[i][j][1]])
+					}
+					me.drawByFrame(verticesByRound, i);
+				}
+			}
+		}, FREQUENCY)
+	}
+	Ploter.prototype.drawByFrame = function(vertices, seriesIndex){
+		var	ctx = this.ctx,
+			dataLength = this.dataLength,
+			ploterOpt = this.options.ploter;
+
+		ctx.beginPath();
+		ctx.moveTo(vertices[0][0], vertices[0][1]);
+		for(var i = 0; i < dataLength; i++){
+			var next = i + 1 != dataLength ? i + 1 : 0;
+			ctx.lineTo(vertices[next][0], vertices[next][1]);
+		}
+		ctx.closePath();
+		ctx.strokeStyle = ploterOpt.colors ? ploterOpt.colors[seriesIndex] : 'transparent';
+		ctx.lineWidth = ploterOpt.width ? parseInt(ploterOpt.width) : 2;
+		ctx.globalAlpha = OPACITY[1];
+		ctx.stroke();
+		ctx.fillStyle = ctx.strokeStyle;
+		ctx.globalAlpha = OPACITY[0];
+		ctx.fill();
+		if(this.options.marker) {
+			this.drawMarkers(vertices, seriesIndex);
+		}
+	}
+	Ploter.prototype.drawMarkers = function(vertices, seriesIndex){
+		var	len = vertices.length;
+
+		for(var i = 0; i < len; i++){
+			this.drawSingleMarker(vertices, seriesIndex, i);
+		}
+	}
+	Ploter.prototype.drawSingleMarker = function(vertices, seriesIndex, dataIndex, scale){
+		var	ctx = this.ctx,
+			ploterOpt = this.options.ploter,
+			markerOpt = this.options.marker,
+			scale = scale ? scale : 1;
+
+		ctx.beginPath();
+		ctx.arc(vertices[dataIndex][0], vertices[dataIndex][1], parseInt(markerOpt.radius) * scale, 0, 2 * Math.PI);
+		ctx.closePath();
+		if(markerOpt.border){
+			ctx.strokeStyle = markerOpt.border.color;
+			ctx.lineWidth = parseInt(markerOpt.border.width) * 2;
+		}
+		ctx.globalAlpha = OPACITY[2];
+		ctx.stroke();
+		ctx.fillStyle = ploterOpt.colors ? ploterOpt.colors[seriesIndex] : 'transparent';
+		ctx.fill();
+	}
+	// Ploter.prototype.scaleMarker = function(vertices, seriesIndex, dataIndex){
+	// 	this.ctx.save();
+	// 	this.drawSingleMarker(vertices[seriesIndex], seriesIndex, dataIndex, 1.5);
+	// }
+	Ploter.prototype.redraw = function(series){
+		this.options.series = series;
+		this.draw();
+	}
+
+	// Tooltip Class
+	var Tooltip = function(options, owner){
+		this.options = options;
+		this.owner = owner;
+		this.init();
+	}
+	Tooltip.prototype = {
+		init: function(){
+			var elem = this.elem = createElement('div', {class: 'radarcharts-tooltip'}, 'cacac'),
+				options = this.options,
+				tooltipOpt = this.options.tooltip,
+				owner = this.owner,
+				cssText = getCssText(tooltipOpt) + 'display: none; position: absolute; left: 0; top: 0; background: white; font-size: 12px; color: black; padding: 5px 10px; pointer-events: none';
+
+			elem.style.cssText = cssText;
+			this.hide();
+			options.wrapper.appendChild(elem);
+
+			owner.ploter.elem.onmousemove = function(e){
+				if(owner.ploter.animationEnded) owner.mousemoveHandler(e, options)
+			}
+		},
+		show: function(vertices, seriesIndex, dataIndex){
+			// this.owner.ploter.scaleMarker(vertices, seriesIndex, dataIndex);
+			this.render(seriesIndex, dataIndex);
+			this.elem.style.display = 'block';
+			this.move(vertices[seriesIndex][dataIndex]);
+		},
+		hide: function(){
+			this.owner.ploter.ctx.restore();
+			this.elem.style.display = 'none';
+		},
+		move: function(toPos){
+			var elem = this.elem;
+			this.elem.style.left = (toPos[0] - elem.clientWidth / 2) +'px';
+			this.elem.style.top = (toPos[1] - elem.clientHeight - 10) +'px';
+		},
+		render: function(seriesIndex, dataIndex){
+			elem = this.elem;
+			
+			elem.innerHTML = this.parseFormat(seriesIndex, dataIndex);
+			elem.style.borderColor = this.options.ploter.colors[seriesIndex];
+		},
+		parseFormat: function(seriesIndex, dataIndex){
+			var options = this.options,
+				format = options.tooltip.format,
+				match = format.match(/\{(series|point)\.[a-zA-Z]+\}/g),
+				len = match ? match.length : 0,
+				splitter = /[{\.}]/,
+				offeredObj = {
+					series: options.series[seriesIndex],
+					point: {
+						name: options.categories[dataIndex],
+						value: options.series[seriesIndex].data[dataIndex]
+					}
+				},
+				res;
+
+			for(var i = 0; i < len; i++){
+				var replaceTarget = match[i],
+					parts = (' '+ replaceTarget).split(splitter),
+					field = offeredObj[parts[1]],
+					prop = parts[2],
+					replacement = field[prop];
+
+				format = format.replace(replaceTarget, replacement);
+			}
+
+			return format;
+		}
+	}
+
+	// Chart Class
+	var Chart = function(options){
+		this.options = merge(options || {}, CONFIG);
+		validateParam(options);
+		this.init();
+	}
+	Chart.prototype = {
+		init: function(){
+			var options = this.options;
+
+			this.setChartSize(options, options.renderTo.clientWidth);
+			if(options.title) this.setTitle();
+			this.setWrapper(options);
+			this.setContainer(options);
+			this.setDefaultLegendEnableArr();
+			this.background = new Background(options);
+			this.ploter = new Ploter(options);
+			this.setPloter();
+			if(options.tooltip) this.tooltip = new Tooltip(options, this);
+			if(options.legend) this.setLegend(options);
+		},
+		setChartSize: function(options, wrapperWidth){
+			if(!options.size) {
+				options.size = [wrapperWidth, wrapperWidth];
+				return;
+			}
+
+			var value,
+				width = getSize(options.size[0], wrapperWidth),
+				height = getSize(options.size[1], wrapperWidth);
+			options.size = [width, height];
+		},
+		setContainer: function(options){
+			options.renderTo.appendChild(options.wrapper);
+			options.renderTo.style.cssText = getCssText(options.style);
+			options.renderTo.style.width = options.size[0] +'px';
+		},
+		setWrapper: function(options){
+			options.wrapper = createElement('div', {class: 'radarcharts-wrapper'});
+			options.wrapper.style.position = 'relative';
+
+			// options.renderTo.style.font = options.font;
+		},
+		setPloter: function(){
+			this.ploter.elem.style.position = 'absolute';
+			this.ploter.elem.style.top = 0;
+			this.ploter.elem.style.left = 0;
+		},
+		redraw: function(series, redrawoOpt){
+			if(redrawoOpt){
+				if(redrawoOpt.refresh) this.ploter.options.preSeries = undefined;
+			}
+			this.ploter.redraw(series);
+			this.renderLegend(this.options);
+		},
+		setTitle: function(){
+			var elem = createElement('p', {class: 'radarcharts-title'}),
+				titleOpt = this.options.title,
+				cssText = getCssText(titleOpt);
+
+			elem.innerHTML = titleOpt.text;
+			elem.style.cssText = cssText;
+			this.options.renderTo.appendChild(elem);
+		},
+		setDefaultLegendEnableArr: function(){
+			var seriesLength = this.options.series.length,
+				arr = [];
+
+			for(var i = 0; i < seriesLength; i++){
+				arr.push(true);
+			}
+			this.options.legendEnableArr = arr;
+		},
+		mousemoveHandler: function(e, options){
+			var options = this.options,
+				size = options.size,
+				ploter = this.ploter,
+				seriesLength = options.series.length,
+				dataLength = ploter.dataLength,
+				vertices = ploter.options.vertices,
+				ploterElem = e.target,
+				ploterElemPos = getPosition(ploterElem),
+				pointPos = [e.pageX - ploterElemPos[0], e.pageY - ploterElemPos[1]];
+
+			if(options.currentMarker){
+				if(isMouseOnPoint(options.currentMarker, pointPos, options)){
+					return;
+				} else {
+					options.currentMarker = null;
+					this.tooltip.hide();
+				}
+			}
+
+			outterLoop:
+			for(var i = 0; i < seriesLength; i++){
+				if(options.legendEnableArr[i]){
+					for(var j = 0; j < dataLength; j++){
+						if(isMouseOnPoint(vertices[i][j], pointPos, options)){
+							this.tooltip.show(vertices, i, j);
+							options.currentMarker = vertices[i][j];
+							break outterLoop;
+						}
+					}
+				}	
+			}
+		},
+		setLegend: function(options){
+			var legendWrapper = this.legendWrapper = createElement('div'),
+				legendOpt = options.legend,
+				legendWrapperCssText = getCssText(legendOpt) + 'text-align: center; font-size: 12px;';
+
+			this.renderLegend(options);
+			this.addEventForLegend(legendWrapper);
+			legendWrapper.style.cssText = legendWrapperCssText;
+			this.options.renderTo.appendChild(legendWrapper);
+		},
+		renderLegend: function(options){
+			if(!options.legend) return;
+
+			var ploterOpt = options.ploter,
+				series = options.series,
+				len = series.length,
+				legendEnableArr = options.legendEnableArr,
+				legendWrapper = this.legendWrapper,
+				legendCssText = 'display: inline-block; cursor: pointer; margin: 2px 5px;',
+				legendNameCssText = legendLineCssText = 'float: left; height: 16px; line-height: 16px;',
+				legend,
+				legendName,
+				legendLine;
+
+			legendWrapper.innerHTML = '';	
+			for(var i = 0; i < len; i++){
+				legend = createElement('div', {class: 'radarcharts-legend'});
+				legendName = createElement('span');
+				legendLine = createElement('span');
+				legendName.innerHTML = series[i].name;
+				legendName.style.cssText = legendNameCssText;
+				legendLine.style.cssText = legendLineCssText + 'margin-right: 2px; height: 8px; width: 30px; border-bottom: 2px solid'+ (ploterOpt ? ploterOpt.colors[i] : 'transparent') +';';
+				legend.style.cssText = legendCssText;
+				legend.appendChild(legendLine);
+				legend.appendChild(legendName);
+
+				legendWrapper.appendChild(legend);
+				if(!legendEnableArr[i]) this.disableLegend(legend);
+			}
+		},
+		addEventForLegend: function(legendWrapper){
+			var	me = this;
+
+			legendWrapper.onclick = function(e){
+				var target = e.target,
+					legend = this.childNodes,
+					series = clone(me.options.series),
+					legendEnableArr = me.options.legendEnableArr;
+
+				if(hasClass(target.parentNode,'radarcharts-legend')) target = target.parentNode;
+				if(hasClass(target, 'radarcharts-legend')){
+					for(i = 0; i < legend.length; i++){
+						if(legend[i] == target){
+							if(!hasClass(target, 'disabled')){
+								me.disableLegend(target);
+								legendEnableArr[i] = false;
+							} else {
+								me.enableLegend(target);
+								legendEnableArr[i] = true;
+							}
+							me.ploter.redraw(series);
+						}
+					}	
+				}
+			}
+		},
+		disableLegend: function(target){
+			addClass(target, 'disabled');
+			target.style.opacity = OPACITY[0];
+		},
+		enableLegend: function(target){
+			removeClass(target, 'disabled');
+			target.style.opacity = OPACITY[2];
+		},
+		destroy: function(){
+			this.ploter.elem.onmousemove = null;
+			this.legendWrapper.onclick = null;
+			this.options.renderTo.innerHTML = '';
+		}
+	}
+
+	// export Chart Class for window object form this closure
+	window.Radarcharts = Chart;
+
+	// export for jQuery coding style
+	if(window.jQuery) {
+		$.fn.Radarcharts = function(options){
+			options.renderTo = this[0];
+			return new Radarcharts(options);
+		}
+	}
+
+})()
 
 
 
