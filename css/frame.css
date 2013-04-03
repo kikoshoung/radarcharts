@@ -74,7 +74,7 @@ pre p{
 }
 pre p span.num{
 	display: inline-block;
-	width: 20px;
+	width: 30px;
 	text-align: right;
 	line-height: inherit;
 	position: absolute;

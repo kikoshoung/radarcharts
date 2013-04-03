@@ -7,27 +7,32 @@
 
 	// default config of chart
 	var CONFIG = {
+		// chart size, [width, height], '100%' | 300 | '300px'
+		size: ['100%', '100%'],
 
-		// style of chart
+		// chart's padding value (percentage)
+		paddingPercentage: 0.2,
+
+		// animation duration of the plot line (millisecond)
+		duration: 300,
+
+		// style of chart, support font style only till now, work on title and legend elements
 		style: {
 			font: 'normal 12px Arial',
 			// a standard font style will be like this
 			// --> font: 'italic bold 20px/30px Arial',
 			
-			color: 'red'
+			color: 'black'
 		},
-
-		// chart size, [width, height], '100%' | 300 | '300px'
-		size: ['100%', '100%'],
 
 		// chart title options
 		title: {
 			text: 'Radar chart title',
 			width: '60%',
 			font: 'normal 20px Arial',
-			color: 'black',
-			padding: '10px 10px',
-			margin: '0 20%',
+			color: 'inherit',
+			padding: '10px 10%',
+			margin: '0 10%',
 			textAlign: 'center',
 			border: '1px solid #a5a5a5',
 			borderRadius: '5px'
@@ -35,15 +40,12 @@
 
 		// chart legend options
 		legend: {
-			color: 'black',
+			color: 'inherit',
 			border: '1px solid #a5a5a5',
 			borderRadius: '5px',
 			margin: '0 20%',
 			padding: 0
 		},
-
-		// chart's padding value (percentage)
-		paddingPercentage: 0.2,
 
 		// background options
 		background: {
@@ -75,31 +77,35 @@
 			border: {
 				width: '2px',
 				color: 'white'
-			}
+			},
+			onClick: null
 		},
 
 		// header options
 		header: {
-			color: 'black',
-			offset: '5px'
+			color: 'inherit',
+			offset: '5px',
+			font: 'normal 14px Arial'
 		},
-
-		// animation duration of the plot line (millisecond)
-		duration: 300,
 
 		// ploter options
 		ploter: {
 			width: '2px',
-			colors: ['#289af3', '#E4780B', '#71bbf5', '#FDA30D', '#134973', '#E4390B', '#365873', '#FD1C0D', '#207ac0', 
-					'#FC8A4B', '#1953dc', '#7B2C00', '#1d24fa', '#7B4425', '#19badc', '#C84700' ,'#1dfae5', '#fb5900']
+			fill: true,
+
+			// plot line colors lib
+			colors: ['#289af3', '#E4780B', '#71bbf5', '#FDA30D', '#134973', '#E4390B', '#365873', '#FD1C0D', '#207ac0', '#FC8A4B', '#1953dc', '#7B2C00', '#1d24fa', '#7B4425', '#19badc', '#C84700' ,'#1dfae5', '#fb5900']
 		},
 
 		// tooltip options
 		tooltip: {
-			width: '100px',
+			width: 'auto',
 			border: '2px solid transparent',
 			borderRadius: '5px',
-			format: '<b>{series.name}</b><br/>{point.name}: {point.value}'
+			color: 'inherit',
+
+			// html string with replacement
+			format: '<b>{series.name}</b><br/>{point.name}: {point.value} / {options.maxValue}'
 		}
 	};
 
@@ -121,7 +127,7 @@
 
 	// clone an object deeply
 	var clone = function(original){
-		if(typeof original != 'object' || original.nodeType) return original;
+		if(typeof original != 'object' || !original || original.nodeType) return original;
 
 		var clonedObject = original.constructor === Array ? [] : {};
 
@@ -210,13 +216,20 @@
 	// ensure that 'value' is an int type value
 	var parseSeries = function(series){
 		var seriesLength = series.length,
-			dataLength = series[0].data.length;
+			dataLength = series[0].data.length,
+			maxValue;
 
 		for(var j = 0; j < seriesLength; j++){
 			for(var i = 0; i < dataLength; i++){
 				series[j].data[i] = parseFloat(series[j].data[i]);
+				if(maxValue){
+					maxValue = series[j].data[i] > maxValue ? series[j].data[i] : maxValue;
+				} else {
+					maxValue = series[j].data[i];
+				}
 			}
 		}
+		return maxValue;
 	}
 
 	// parse the size value of options, '100.5' --> 100.5, '100.5px' --> 100.5
@@ -323,7 +336,7 @@
 	}
 
 	var validateParam = function(options){
-		var paramList = ['categories', 'series', 'maxValue'],
+		var paramList = ['renderTo', 'categories', 'series'],
 			len = paramList.length;
 		for(var i = 0; i < len; i++){
 			if(!options[paramList[i]]) throw 'Error: Can not find param "'+ paramList[i] +'" in options.';
@@ -445,7 +458,7 @@
 			ctx.textBaseline = baseline;
 			ctx.textAlign = align;
 			ctx.font = options.header.font;
-		    ctx.fillStyle = options.header.color;
+		    ctx.fillStyle = options.header.color === 'inherit' ? options.style.color : options.header.color;
 		    ctx.fillText(options.categories[i], vertices[i][0], vertices[i][1]);
 		}
 	}
@@ -498,7 +511,6 @@
 
 
 		if(this.timer) clearInterval(this.timer);
-		parseSeries(series)
 		this.timer = setInterval(function(){
 			me.animationEnded = false;
 			frameNum--;
@@ -548,9 +560,12 @@
 		ctx.lineWidth = ploterOpt.width ? parseInt(ploterOpt.width) : 2;
 		ctx.globalAlpha = OPACITY[1];
 		ctx.stroke();
-		ctx.fillStyle = ctx.strokeStyle;
-		ctx.globalAlpha = OPACITY[0];
-		ctx.fill();
+		if(ploterOpt.fill){
+			ctx.fillStyle = ctx.strokeStyle;
+			ctx.globalAlpha = OPACITY[0];
+			ctx.fill();
+		}
+		
 		if(this.options.marker) {
 			this.drawMarkers(vertices, seriesIndex);
 		}
@@ -580,10 +595,6 @@
 		ctx.fillStyle = ploterOpt.colors ? ploterOpt.colors[seriesIndex] : 'transparent';
 		ctx.fill();
 	}
-	// Ploter.prototype.scaleMarker = function(vertices, seriesIndex, dataIndex){
-	// 	this.ctx.save();
-	// 	this.drawSingleMarker(vertices[seriesIndex], seriesIndex, dataIndex, 1.5);
-	// }
 	Ploter.prototype.redraw = function(series){
 		this.options.series = series;
 		this.draw();
@@ -597,11 +608,11 @@
 	}
 	Tooltip.prototype = {
 		init: function(){
-			var elem = this.elem = createElement('div', {class: 'radarcharts-tooltip'}, 'cacac'),
+			var elem = this.elem = createElement('div', {class: 'radarcharts-tooltip'}),
 				options = this.options,
 				tooltipOpt = this.options.tooltip,
 				owner = this.owner,
-				cssText = getCssText(tooltipOpt) + 'display: none; position: absolute; left: 0; top: 0; background: white; font-size: 12px; color: black; padding: 5px 10px; pointer-events: none';
+				cssText = getCssText(tooltipOpt) + 'display: none; position: absolute; left: 0; top: 0; background-color: white; font-size: 12px; padding: 5px 10px; pointer-events: none; white-space:nowrap;';
 
 			elem.style.cssText = cssText;
 			this.hide();
@@ -610,21 +621,22 @@
 			owner.ploter.elem.onmousemove = function(e){
 				if(owner.ploter.animationEnded) owner.mousemoveHandler(e, options)
 			}
+			owner.ploter.elem.onclick = function(e){
+				owner.clickHandler(e, options)
+			}
 		},
 		show: function(vertices, seriesIndex, dataIndex){
-			// this.owner.ploter.scaleMarker(vertices, seriesIndex, dataIndex);
-			this.render(seriesIndex, dataIndex);
 			this.elem.style.display = 'block';
+			this.render(seriesIndex, dataIndex);
 			this.move(vertices[seriesIndex][dataIndex]);
 		},
 		hide: function(){
-			this.owner.ploter.ctx.restore();
 			this.elem.style.display = 'none';
 		},
 		move: function(toPos){
 			var elem = this.elem;
-			this.elem.style.left = (toPos[0] - elem.clientWidth / 2) +'px';
-			this.elem.style.top = (toPos[1] - elem.clientHeight - 10) +'px';
+			elem.style.left = (toPos[0] - elem.clientWidth / 2) +'px';
+			elem.style.top = (toPos[1] - elem.clientHeight - 10) +'px';
 		},
 		render: function(seriesIndex, dataIndex){
 			elem = this.elem;
@@ -635,7 +647,7 @@
 		parseFormat: function(seriesIndex, dataIndex){
 			var options = this.options,
 				format = options.tooltip.format,
-				match = format.match(/\{(series|point)\.[a-zA-Z]+\}/g),
+				match = format.match(/\{(series|point|options)\.[a-zA-Z]+\}/g),
 				len = match ? match.length : 0,
 				splitter = /[{\.}]/,
 				offeredObj = {
@@ -643,7 +655,8 @@
 					point: {
 						name: options.categories[dataIndex],
 						value: options.series[seriesIndex].data[dataIndex]
-					}
+					},
+					options: options
 				},
 				res;
 
@@ -670,7 +683,7 @@
 	Chart.prototype = {
 		init: function(){
 			var options = this.options;
-
+			options.maxValue = options.maxValue ? options.maxValue : parseSeries(options.series);
 			this.setChartSize(options, options.renderTo.clientWidth);
 			if(options.title) this.setTitle();
 			this.setWrapper(options);
@@ -701,8 +714,6 @@
 		setWrapper: function(options){
 			options.wrapper = createElement('div', {class: 'radarcharts-wrapper'});
 			options.wrapper.style.position = 'relative';
-
-			// options.renderTo.style.font = options.font;
 		},
 		setPloter: function(){
 			this.ploter.elem.style.position = 'absolute';
@@ -734,6 +745,16 @@
 			}
 			this.options.legendEnableArr = arr;
 		},
+		clickHandler: function(e, options){
+			var ploterElem = e.target,
+				ploterElemPos = getPosition(ploterElem),
+				pointPos = [e.pageX - ploterElemPos[0], e.pageY - ploterElemPos[1]],
+				currentMarker = options.currentMarker;
+
+			if(currentMarker && options.marker.onClick){
+				options.marker.onClick(options.series, currentMarker.seriesIndex, currentMarker.dataIndex);
+			}
+		},
 		mousemoveHandler: function(e, options){
 			var options = this.options,
 				size = options.size,
@@ -743,10 +764,12 @@
 				vertices = ploter.options.vertices,
 				ploterElem = e.target,
 				ploterElemPos = getPosition(ploterElem),
-				pointPos = [e.pageX - ploterElemPos[0], e.pageY - ploterElemPos[1]];
+				pointPos = [e.pageX - ploterElemPos[0], e.pageY - ploterElemPos[1]],
+				seriesIndex,
+				dataIndex;
 
 			if(options.currentMarker){
-				if(isMouseOnPoint(options.currentMarker, pointPos, options)){
+				if(isMouseOnPoint(options.currentMarker.vertices, pointPos, options)){
 					return;
 				} else {
 					options.currentMarker = null;
@@ -754,17 +777,24 @@
 				}
 			}
 
-			outterLoop:
 			for(var i = 0; i < seriesLength; i++){
 				if(options.legendEnableArr[i]){
 					for(var j = 0; j < dataLength; j++){
 						if(isMouseOnPoint(vertices[i][j], pointPos, options)){
-							this.tooltip.show(vertices, i, j);
-							options.currentMarker = vertices[i][j];
-							break outterLoop;
+							seriesIndex = i;
+							dataIndex = j;
 						}
 					}
 				}	
+			}
+
+			if(seriesIndex != undefined && dataIndex != undefined){
+				this.tooltip.show(vertices, seriesIndex, dataIndex);
+				options.currentMarker = {
+					seriesIndex: seriesIndex,
+					dataIndex: dataIndex,
+					vertices: vertices[seriesIndex][dataIndex]
+				}
 			}
 		},
 		setLegend: function(options){

@@ -14,378 +14,594 @@
 			<h1 class="mb-l">Radarcharts JS</h1>
 			<p>使用 Canvas 技术实现的一种雷达展现形式的图表。</p>
 			<p>Canvas charts with radar impression.</p>
+			<p class="mt-m"><a target="_blank" href="https://github.com/kikoshoung/radarcharts">Fork me on github</a></p>
 			<div class="block">
 				<h2>一分钟简介</h2>
-				<p>相信很多人都玩过实况足球，在选择球员的时候你都能看到这样一个雷达表，里面是球员各方面的属性值，你可以通过这个东西比较多个球员之间的明显差别。下面是我模仿实况足球的雷达表利用 Canvas 实现的 HTML5 雷达表。</p>
-				<p>先看一个例子，我们来比较一下上赛季和本赛季中，梅西的各项属性值。<br/><a class="player-classic" id="previous-season">上赛季</a> 和 <a class="player-classic" id="current-season">本赛季</a> 这两位球员的各项属性值：（切换赛季试试看）</p>
-				<div id="container-classic"></div>
-				<p class="mt-m">通过上面的图表对比，能够清晰地分析出，梅球王转型了，从防守型转型成了进攻型。当然，数据是伪造的，梅球王他丫一直是妖刀。</p>
+				<p>雷达图表是一种以雷达形式展现数据的图表，对某些数据来说，使用雷达图表展示出来会更加直观，更容易看出数据的特点。Radarcharts 采用 HTML5 的 Canvas 技术，是一个参数丰富、灵活好用的图表类。</p>
+				<p>先看一个简单的 Radarcharts 用例，我们来比较一下两位前端工程师的各项能力值：</p>
+				<div style="display: inline-block; padding: 20px 50px; background-color: #30393b; box-shadow: inset 0 -100px 300px rgba(0, 0, 0, .6);">
+					<div id="container-engineer"></div>
+				</div>
+				<p class="mt-m">通过观察图表，能够清晰地看出，工程师甲的技能几乎满级，但是沟通能力差，很有可能是个怪咖；工程师乙各项技能都要稍稍逊色于工程师甲，但是工程师乙的能力值很均衡，不必担心是个怪咖。</p>
+				<p class="text-dark">下面还给出了另外3个用例，教大家如何使用 Radarcharts JS 做出各式各样的图表。</p>
 			</div>
 			<div class="block">
 				<h2>使用方法</h2>
 				<ol class="decorated">
-					<li>在页面内引入 <a target="_blank" href="/minified/radarcharts.min.js">radarcharts.min.js</a> 或 <a target="_blank" href="/js/radarcharts.js">radarcharts.js</a></li>
-					<li>然后，在页面内放置你的 DOM 容器，如：&lt;div id="container-classic"&gt;&lt;/div&gt;</li>
-					<li>最后，构造一个 Radarcharts 实例：<br/>
-						<pre>
-							<code>
-/* 创建两位球员的数据 */
-var data1 = [
-		{name: "速度", value: 95},
-		{name: "力量", value: 70},
-		{name: "平衡", value: 95},
-		{name: "盘带", value: 95},
-		{name: "射门", value: 90},
-		{name: "防守", value: 70}
-	],
-	data2 = [
-		{name: "速度", value: 70},
-		{name: "力量", value: 90},
-		{name: "平衡", value: 85},
-		{name: "盘带", value: 70},
-		{name: "射门", value: 70},
-		{name: "防守", value: 95}
+					<li>在页面内引入 <a target="_blank" href="https://raw.github.com/kikoshoung/radarcharts/master/minified/radarcharts.min.js">radarcharts.min.js</a> 或 <a target="_blank" href="https://raw.github.com/kikoshoung/radarcharts/master/js/radarcharts.js">radarcharts.js</a></li>
+					<li>然后，在页面内放置你的 DOM 容器，如：&lt;div id="container-engineer"&gt;&lt;/div&gt;</li>
+					<li>最后，构造一个 Radarcharts 实例（这里以“前端工程师能力展示”图表的代码为例）：</li>
+				</ol>
+				<pre>
+					<code>
+// 设定两位工程师的数据
+var engineers = [
+		{name: '工程师甲', data: [95, 90, 90, 90, 60]},
+		{name: '工程师乙', data: [80, 78, 82, 81, 80]}
 	];
 
-/* 初始雷达表 */
-var radarchartsClassic = new Radarcharts({
-	renderTo: $("#container-classic"),
-	size: "s",
-	items: data1
-});
-
-/* 给触发按钮绑定事件 */
-$(".player-classic").bind("click", function(){
-	var id = $(this).attr("id"),
-		data;
-	if(id == "messi"){
-		data = data1;
-	} else {
-		data = data2;
+// 实例化一个图表
+var engineerChart = new Radarcharts({
+	renderTo: $('#container-engineer')[0],
+	categories: ['JS', 'HTML', 'CSS', '经验', '沟通'],
+	series: engineers,
+	maxValue: 100,
+	size: [300, 300],
+	paddingPercentage: 0.25,
+	style: {
+		color: 'white'
+	},
+	title: {
+		text: '前端工程师能力展示',
+		border: false
+	},
+	background: {
+		colors: ['transparent'],
+		border: false
+	},
+	legend: {
+		border: false
+	},
+	axis: {
+		color: 'white'
+	},
+	tooltip: {
+		color: '#666'
 	}
-	radarchartsClassic.drawBdr(data);
 });
-							</code>
-						</pre>
-					</li>
-				</ol>
+					</code>
+				</pre>
 			</div>
 			<div class="block">
 				<h2>关于自定义</h2>
-				<p>一个灵活的组件必须能满足各种场景需求，Radarcharts为了满足大家的各种需求，特设置了以下配置参数：</p>
+				<p>一个灵活的组件必须能满足各种场景需求，Radarcharts为了满足大家的各种需求，设置了丰富的配置参数，我们来看依次来看下面的3个例子。<br/>（参数表详细请见本页末尾）</p>
+
+				<h4>基础篇：各国幸福指数</h4>
+				<div id="container-happiness" class="mt-m mb-m"></div>
 				<pre>
 					<code>
-/* 可以在初始的时候传入config参数，以下列出了能够修改的所有属性 */
-config: {
-	maxValue: 100, // max value of radarcharts
-	padding: 0.2, // padding value of radarcharts
-	bg: {
-		colors: ["#404040", "#5f5f5f"], // background stripe colors, also can be [value, value, ...]
-		num: 5, // number of stripes
-		type: 0 // stripe type, fill or stroke, 0: fill, 1: stroke
-	},
-	border: {
-		width: 2, // charts line width
-		color: "#adfc58" // charts line color
+// 设定各国的幸福指数数据
+var index = [
+		{name: '幸福指数', data: [9.3, 9.2, 9.0, 8.9, 8.7, 8.6, 8.5, 8.3, 7.8, 5]}
+	];
+
+// 实例化一个图表
+var indexChart = new Radarcharts({
+	renderTo: $('#container-happiness')[0],
+	categories: ['丹麦', '瑞士', '奥地利', '冰岛', '芬兰', '不丹', '文莱', '加拿大', '美国', '中国'],
+	series: index,
+	maxValue: 10,
+	size: [400, 400],
+	paddingPercentage: 0.2,
+	style: {
+		color: '#4883a3'
 	},
 	title: {
-		font: "bold 12px arial", // font style of charts attributes' name 
-		color: "black" // font color charts attributes' name 
+		text: '各国幸福指数',
+		border: false
 	},
-	size: { // charts size, small | medium | large
-		s: [200, 200],
-		m: [300, 300],
-		l: [400, 400]
-	},
-	duration: 300 // animation duration
-}
-					<code>
-				</pre>
-			</div>
-			<div class="block">
-				<h4>自定义示例1</h4>
-				<a class="player-1 mr-m" id="messi">梅西</a><a class="player-1" id="puyol">普约尔</a>
-				<div id="container1"></div>
-				<pre>
-					<code>
-var radarcharts1 = new Radarcharts({
-	renderTo: $("#container1"),
-	size: "m",
-	items: data1,
-	config: { // optional
-		bg: {
-			colors: ["#ccc"],
-			num: 10,
-			type: 1
-		},
+	background: {
+		type: 'circle',
+		colors: ['#7baad4', '#86b3dd', '#9dc3e6', '#9dc3e6', '#9dc3e6'],
 		border: {
-			width: 1,
-			color: "333"
-		}
-	}
-});
-$(".player-1").bind("click", function(){
-	var id = $(this).attr("id"),
-		data;
-	if(id == "messi"){
-		data = data1;
-	} else {
-		data = data2;
-	}
-	radarcharts1.drawBdr(data);
-});
-					</code>
-				</pre>
-			</div>
-			<div class="block">
-				<h4>自定义示例2</h4>
-				<a class="player-2 mr-m" id="messi">梅西</a><a class="player-2" id="puyol">普约尔</a>
-				<div id="container2"></div>
-				<pre>
-					<code>
-var radarcharts2 = new Radarcharts({
-	renderTo: $("#container2"),
-	size: "m",
-	items: data1,
-	maxValue: 100,
-	config: { // optional
-		title: {
-			font: "bold 16px Microsoft Yahei",
-			color: "red"
+			color: '#88b5dd'
 		},
-		bg: {
-			colors: ["#c4c5bd", "#809176", "#50a2c2"],
-			num: 3,
-			type: 0
-		}
-	}
-});
-$(".player-2").bind("click", function(){
-	var id = $(this).attr("id"),
-		data;
-	if(id == "messi"){
-		data = data1;
-	} else {
-		data = data2;
-	}
-	radarcharts2.drawBdr(data);
+		num: 5
+	},
+	header: {
+		font: 'bold 14px Arial'
+	},
+	axis: {
+		color: '#88b5dd'
+	},
+	ploter: {
+		width: '2px',
+		colors: ['#a3d3f7']
+	},
+	tooltip: {
+		format: '<b>{point.name}</b>: {point.value} / {options.maxValue}'
+	},
+	legend: false
 });
 					</code>
 				</pre>
 			</div>
 			<div class="block">
-				<h4>自定义示例3</h4>
-				<a class="player-3 mr-m" id="messi">梅西</a><a class="player-3" id="puyol">普约尔</a>
-				<div id="container3"></div>
+				<h4>进阶篇：实况足球</h4>
+				<div id="container-pes" class="mt-m mb-m"></div>
+				<p>通过切换球员（<a class="pes-player" id="messi">梅西</a> 和 <a class="pes-player" id="puyol">普约尔</a>）来观察图表变换，能够清晰的看出他们一个防守好，一个进攻好。<br/>即使这是一组新人的数据，教练也可以轻松合理地安排他们踢什么样的位置。</p>
 				<pre>
 					<code>
-var data3 = [
-		{name: "速度", value: 95},
-		{name: "盘带", value: 95},
-		{name: "防守", value: 70}
+// 设定梅西和普约尔的数据
+var messi = [
+		{name: '梅西', data: [95, 70, 95, 95, 90, 70]}
 	],
-	data4 = [
-		{name: "速度", value: 70},
-		{name: "盘带", value: 70},
-		{name: "防守", value: 95}
+	puyol = [
+		{name: '普约尔', data: [70, 90, 90, 70, 70, 95]}
 	];
-var radarcharts3 = new Radarcharts({
-	renderTo: $("#container3"),
-	size: "m",
-	items: data3,
-	config: { // optional
-		title: {
-			font: "bold 20px ",
-			color: "black"
-		},
-		duration: 1000
-	}
+
+// 实例化一个图表
+var pesChart = new Radarcharts({
+	renderTo: $('#container-pes')[0],
+	categories: ['速度', '力量', '平衡', '盘带', '射门', '防守'],
+	series: messi,
+	maxValue: 100,
+	size: [300, 300],
+	paddingPercentage: 0.2,
+	title: {
+		text: '梅西和普约尔的对比'
+	},
+	background: {
+		colors: ['#404040', '#5f5f5f'],
+		border: false,
+		num: 5
+	},
+	ploter: {
+		width: '4px',
+		fill: false,
+		colors: ['#adfc58']
+	},
+	axis: false,
+	marker: false,
+	legend: false
 });
-$(".player-3").bind("click", function(){
-	var id = $(this).attr("id"),
-		data;
-	if(id == "messi"){
-		data = data3;
+
+// 以上是创建一个图表的完整过程，下面的是根据需求自行添加的控制代码
+
+// 给创建的图表添加redraw功能
+var player = 'messi';
+$('.pes-player').bind('click', function(){
+	var id = $(this).attr('id'),
+		series;
+
+	series = id == 'messi' ? messi : puyol;
+	if(player === id){
+		pesChart.redraw(series, {refresh: true});
 	} else {
-		data = data4;
+		player = id;
+		pesChart.redraw(series);
 	}
-	radarcharts3.drawBdr(data);
 });
 					</code>
+				</pre>
+			</div>
+			<div class="block">
+				<h4>高级篇：商业数据展示</h4>
+				<div id="container-business" class="mt-m mb-m"></div>
+				<p>通过切换年份（<a class="year" id="this">今年</a> 和 <a class="year" id="last">去年</a>）来观察图表变换，能够清晰的看出该公司今年较去年的销售量有了很大的增涨，业绩发展得非常不错。<br/>另外还可以清晰地看到一个改变，那就是10月份的销售量很反常，裤子的销售量超过了衣服，该公司应该分析一下10月份的各项因素。</p>
+				<pre>
+					<code>
+// 设定去年和今年的销售量数据
+var thisYear = [
+		{name: '衣服', data: [102, 72, 96, 95, 105, 113, 102, 99, 96, 95, 90, 113]},
+		{name: '裤子', data: [80, 45, 68, 72, 80, 106, 79, 72, 67, 110, 61, 89]}
+	],
+	lastYear = [
+		{name: '衣服', data: [60, 52, 66, 75, 70, 73, 80, 72, 80, 75, 70, 82]},
+		{name: '裤子', data: [42, 31, 63, 46, 51, 43, 58, 47, 56, 70, 56, 65]}
+
+	];
+
+// 实例化一个图表
+var businessChart = new Radarcharts({
+	renderTo: $('#container-business')[0],
+	categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+	series: thisYear,
+	maxValue: 120,
+	size: [450, 450],
+	paddingPercentage: 0.22,
+	style: {
+		color: '#818181'
+	},
+	marker: {
+		onClick: function(series, seriesIndex, dataIndex){
+			alert((dataIndex + 1) +'月份，'+ series[seriesIndex].name +'的销售量为：'+ series[seriesIndex].data[dataIndex] +' 万件')
+		}
+	},
+	title: {
+		text: '某公司全年的产品销售量分布',
+		border: false
+	},
+	background: {
+		type: 'circle',
+		colors: ['#f6f6f6'],
+		border: {
+			color: '#e1e4e4'
+		},
+		num: 5
+	},
+	ploter: {
+		width: '2px',
+		colors: ['#dbcb00', '#41a0a0']
+	},
+	axis: {
+		color: '#ced1d2'
+	},
+	tooltip: {
+		format: '<b>{series.name}</b><br/>{point.name}: {point.value} / {options.maxValue}（万件）'
+	},
+	header: {
+		offset: '20px'
+	}
+});
+
+// 以上是创建一个图表的完整过程，下面的是根据需求自行添加的控制代码
+
+// 给创建的图表添加redraw功能
+var year = 'this';
+$('.year').bind('click', function(){
+	var id = $(this).attr('id'),
+		series;
+
+	series = id == 'this' ? thisYear : lastYear;
+	if(year === id){
+		businessChart.redraw(series, {refresh: true});
+	} else {
+		year = id;
+		businessChart.redraw(series);
+	}
+});
+					</code>
+				</pre>
+			</div>
+			<div class="block">
+				<h2>Tips</h2>
+				<ul class="decorated">
+					<li>在 chart.redraw(series, [options]) 方法中，第二个参数为可选，其中包含一个 refresh 值（迄今为之，仅提供 refresh 一个选项），默认为 false，这个值可以让使用者在调用 redraw 方法的时候采用“刷新”或“过渡”的方式来重绘图表。“刷新”即重绘图形的时候会从坐标原点开始画第一帧，“过渡”即重绘图形的时候从上一个状态开始画第一帧。</li>
+					<li>在配置参数 marker 中，可以添加 onClick(series, seriesIndex, dataIndex) 方法来监听一个 marker 的点击处理函数，其中 series 为用户在初始 Radarcharts 的时候传入的 series 值；seriesIndex 为 当前被点击的 marker 在 series 中的数据组 index；dataIndex 为 当前被点击的 marker 在 series[seriesIdex].data 中的 index。</li>
+					<li>jQuery 用户可以这样使用 Radarcharts 来初始一个图表：$('#container').Radarcharts(options)<br/>这样使用的话，options 中就不用再传入 renderTo 了。</li>
+					<li>如果您不想使用某项默认的配置，那么请给相应值传入一个 falsy 值，如：legend: false;。</li>
+					<li>配置参数中的 maxValue 是一组数据范围的最大值，默认为这组数据中的最大值。</li>
+				</ul>
+			</div>
+			<div class="block">
+				<h2>参数表详细</h2>
+				<p>以下是 Radarcharts 的默认参数配置，您可以依据自己的喜好 override 它。</p>
+				<pre>
+					<code>
+CONFIG = {
+	// chart size, [width, height], '100%' | 300 | '300px'
+	size: ['100%', '100%'],
+
+	// chart's padding value (percentage)
+	paddingPercentage: 0.2,
+
+	// animation duration of the plot line (millisecond)
+	duration: 300,
+
+	// style of chart, support font style only till now, work on title and legend elements
+	style: {
+		font: 'normal 12px Arial',
+		// a standard font style will be like this
+		// --> font: 'italic bold 20px/30px Arial',
+		
+		color: 'black'
+	},
+
+	// chart title options
+	title: {
+		text: 'Radar chart title',
+		width: '60%',
+		font: 'normal 20px Arial',
+		color: 'inherit',
+		padding: '10px 10%',
+		margin: '0 10%',
+		textAlign: 'center',
+		border: '1px solid #a5a5a5',
+		borderRadius: '5px'
+	},
+
+	// chart legend options
+	legend: {
+		color: 'inherit',
+		border: '1px solid #a5a5a5',
+		borderRadius: '5px',
+		margin: '0 20%',
+		padding: 0
+	},
+
+	// background options
+	background: {
+		// background type, 'circle' | 'polygon'
+		type: 'polygon',
+
+		// background stripes colors, [value, value, ...]
+		colors: ['#e5e5e5'],
+
+		// background stripes' border
+		border: {
+			width: '1px',
+			color: '#a5a5a5'
+		},
+
+		// number of background stripes in a chart
+		num: 1
+	},
+
+	// axis options
+	axis: {
+		width: '1px',
+		color: '#a5a5a5'
+	},
+
+	// marker options
+	marker: {
+		radius: '4px',
+		border: {
+			width: '2px',
+			color: 'white'
+		},
+		onClick: null
+	},
+
+	// header options
+	header: {
+		color: 'inherit',
+		offset: '5px',
+		font: 'normal 14px Arial'
+	},
+
+	// ploter options
+	ploter: {
+		width: '2px',
+		fill: true,
+
+		// plot line colors lib
+		colors: ['#289af3', '#E4780B', '#71bbf5', '#FDA30D', '#134973', '#E4390B', '#365873', '#FD1C0D', '#207ac0', '#FC8A4B', '#1953dc', '#7B2C00', '#1d24fa', '#7B4425', '#19badc', '#C84700' ,'#1dfae5', '#fb5900']
+	},
+
+	// tooltip options
+	tooltip: {
+		width: 'auto',
+		border: '2px solid transparent',
+		borderRadius: '5px',
+		color: 'inherit',
+
+		// html string with replacement
+		format: '<b>{series.name}</b><br/>{point.name}: {point.value} / {options.maxValue}'
+	}
+};
+					<code>
 				</pre>
 			</div>
 		</div>
 
+		<!-- 一分钟简介 -->
 		<script type="text/javascript">
-			var series1_previous = [
-					{name: '梅西', data: [70, 90, 90, 70, 70, 95]}
-				],
-				series1_current = [
-					{name: 'Messi', data: [95, 70, 95, 95, 90, 70]}
-				],
-				series2 = [
-					{name: '1111', data: [60, 30, 85, 75, 56, 90]},
-					{name: '2222', data: [50, 60, 80, 90, 85, 66]}
-				],
-				series3 = [
-					{name: 'Messi', data: [95, 70, 95, 95, 90, 70]}
-				],
-				series4 = [
-					{name: 'Puyol', data: [70, 90, 90, 70, 70, 95]}
+			// 设定两位工程师的数据
+			var engineers = [
+					{name: '工程师甲', data: [95, 90, 90, 90, 60]},
+					{name: '工程师乙', data: [80, 78, 82, 81, 80]}
 				];
 
-			var radarchartsClassic = $('#container-classic').Radarcharts({
+			// 实例化一个图表
+			var engineerChart = new Radarcharts({
+				renderTo: $('#container-engineer')[0],
+				categories: ['JS', 'HTML', 'CSS', '经验', '沟通'],
+				series: engineers,
+				maxValue: 100,
+				size: [300, 300],
+				paddingPercentage: 0.25,
+				style: {
+					color: 'white'
+				},
+				title: {
+					text: '前端工程师能力展示',
+					border: false
+				},
+				background: {
+					colors: ['transparent'],
+					border: false
+				},
+				legend: {
+					border: false
+				},
+				axis: {
+					color: 'white'
+				},
+				tooltip: {
+					color: '#666'
+				}
+			});
+		</script>
+
+		<!-- 幸福指数 -->
+		<script type="text/javascript">
+			// 设定各国的幸福指数数据
+			var index = [
+					{name: '幸福指数', data: [9.3, 9.2, 9.0, 8.9, 8.7, 8.6, 8.5, 8.3, 7.8, 5]}
+				];
+
+			// 实例化一个图表
+			var indexChart = new Radarcharts({
+				renderTo: $('#container-happiness')[0],
+				categories: ['丹麦', '瑞士', '奥地利', '冰岛', '芬兰', '不丹', '文莱', '加拿大', '美国', '中国'],
+				series: index,
+				maxValue: 10,
+				size: [400, 400],
+				paddingPercentage: 0.2,
+				style: {
+					color: '#4883a3'
+				},
+				title: {
+					text: '各国幸福指数',
+					border: false
+				},
+				background: {
+					type: 'circle',
+					colors: ['#7baad4', '#86b3dd', '#9dc3e6', '#9dc3e6', '#9dc3e6'],
+					border: {
+						color: '#88b5dd'
+					},
+					num: 5
+				},
+				header: {
+					font: 'bold 14px Arial'
+				},
+				axis: {
+					color: '#88b5dd'
+				},
+				ploter: {
+					width: '2px',
+					colors: ['#a3d3f7']
+				},
+				tooltip: {
+					format: '<b>{point.name}</b>: {point.value} / {options.maxValue}'
+				},
+				legend: false
+			});
+		</script>
+
+		<!-- 实况足球 -->
+		<script type="text/javascript">
+			// 设定梅西和普约尔的数据
+			var messi = [
+					{name: '梅西', data: [95, 70, 95, 95, 90, 70]}
+				],
+				puyol = [
+					{name: '普约尔', data: [70, 90, 90, 70, 70, 95]}
+				];
+
+			// 实例化一个图表
+			var pesChart = new Radarcharts({
+				renderTo: $('#container-pes')[0],
 				categories: ['速度', '力量', '平衡', '盘带', '射门', '防守'],
-				series: series1_previous,
+				series: messi,
 				maxValue: 100,
 				size: [300, 300],
 				paddingPercentage: 0.2,
-				// legend: {
-				// 	borderRadius: '10px'
-				// },
 				title: {
-					text: '梅西的属性值对比'
+					text: '梅西和普约尔的对比'
 				},
-				// // title: false
-				// background: {
-				// 	type: 'circle',
+				background: {
+					colors: ['#404040', '#5f5f5f'],
+					border: false,
+					num: 5
+				},
+				ploter: {
+					width: '4px',
+					fill: false,
+					colors: ['#adfc58']
+				},
+				axis: false,
+				marker: false,
+				legend: false
+			});
+			
+			// 以上是创建一个图表的完整过程，下面的是根据需求自行添加的控制代码
 
-				// 	num: 3
-				// },
-				// marker: false,	
-				// marker: false,
-				// axis: false,
-				// duration: 3000,
-				// ploter: false
-
-
-				// header: {
-				// 	font: 'bold 20px Arial',
-				// 	color: 'gray',
-				// 	offset: 20
-
-				// }
-				// title: {
-				// 	text: 'Capabilities of Messi and Puyol',
-				// 	font: 'italic bold 14px/30px "Microsoft Yahei"',
-				// 	color: 'black',
-				// 	textAlign: 'center',
-				// 	border: '1px solid black',
-				// 	margin: '0 20px',
-				// 	padding: '0'
-				// }
-			})
-
-			var previousPlayerClassic = 'previous-season';
-			$(".player-classic").bind("click", function(){
-				var id = $(this).attr("id"),
+			// 给创建的图表添加redraw功能
+			var player = 'messi';
+			$('.pes-player').bind('click', function(){
+				var id = $(this).attr('id'),
 					series;
 
-				series = id == "previous-season" ? series1_previous : series1_current;
-				if((previousPlayerClassic && previousPlayerClassic === id)){
-					radarchartsClassic.redraw(series, {refresh: true});
+				series = id == 'messi' ? messi : puyol;
+				if(player === id){
+					pesChart.redraw(series, {refresh: true});
 				} else {
-					previousPlayerClassic = id;
-					radarchartsClassic.redraw(series);
+					player = id;
+					pesChart.redraw(series);
 				}
 			});
+		</script>
 
-			var radarcharts1 = new Radarcharts({
-				renderTo: $('#container1')[0],
-				size: [300, 300],
-				categories: ['速度', '力量', '平衡', '盘带', '射门', '防守'],
-				series: series3,
-				maxValue: 100,
-				legend: false,
-				title: false
+		<!-- 销售量 -->
+		<script type="text/javascript">
+			// 设定去年和今年的销售量数据
+			var thisYear = [
+					{name: '衣服', data: [102, 72, 96, 95, 105, 113, 102, 99, 96, 95, 90, 113]},
+					{name: '裤子', data: [80, 45, 68, 72, 80, 106, 79, 72, 67, 110, 61, 89]}
+				],
+				lastYear = [
+					{name: '衣服', data: [60, 52, 66, 75, 70, 73, 80, 72, 80, 75, 70, 82]},
+					{name: '裤子', data: [42, 31, 63, 46, 51, 43, 58, 47, 56, 70, 56, 65]}
+
+				];
+
+			// 实例化一个图表
+			var businessChart = new Radarcharts({
+				renderTo: $('#container-business')[0],
+				categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+				series: thisYear,
+				maxValue: 120,
+				size: [450, 450],
+				paddingPercentage: 0.22,
+				style: {
+					color: '#818181'
+				},
+				marker: {
+					onClick: function(series, seriesIndex, dataIndex){
+						alert((dataIndex + 1) +'月份，'+ series[seriesIndex].name +'的销售量为：'+ series[seriesIndex].data[dataIndex] +' 万件')
+					}
+				},
+				title: {
+					text: '某公司全年的产品销售量分布',
+					border: false
+				},
+				background: {
+					type: 'circle',
+					colors: ['#f6f6f6'],
+					border: {
+						color: '#e1e4e4'
+					},
+					num: 5
+				},
+				ploter: {
+					width: '2px',
+					colors: ['#dbcb00', '#41a0a0']
+				},
+				axis: {
+					color: '#ced1d2'
+				},
+				tooltip: {
+					format: '<b>{series.name}</b><br/>{point.name}: {point.value} / {options.maxValue}（万件）'
+				},
+				header: {
+					offset: '20px'
+				}
 			});
+			
+			// 以上是创建一个图表的完整过程，下面的是根据需求自行添加的控制代码
 
-			var previousPlayer1 = 'messi';
-			$(".player-1").bind("click", function(){
-				var id = $(this).attr("id"),
+			// 给创建的图表添加redraw功能
+			var year = 'this';
+			$('.year').bind('click', function(){
+				var id = $(this).attr('id'),
 					series;
-				series = id == "messi" ? series3 : series4;
-				if((previousPlayer1 && previousPlayer1 === id)){
-					radarcharts1.redraw(series, {refresh: true});
+
+				series = id == 'this' ? thisYear : lastYear;
+				if(year === id){
+					businessChart.redraw(series, {refresh: true});
 				} else {
-					previousPlayer1 = id;
-					radarcharts1.redraw(series);
+					year = id;
+					businessChart.redraw(series);
 				}
 			});
+		</script>
 
-			// var radarcharts2 = new Radarcharts({
-			// 	renderTo: $('#container2')[0],
-			// 	size: [300, 300],
-			// 	padding: 0.2,
-			// 	data: data1,
-			// 	background: {
-			// 		colors: ['#404040', '#5f5f5f'],
-			// 		border: {
-			// 			width: 1,
-			// 			color: 'white',
-			// 		},
-			// 		num: 5
-			// 	}
-			// });
-			// $(".player-2").bind("click", function(){
-			// 	var id = $(this).attr("id"),
-			// 		data;
-			// 	data = id == "messi" ? data1 : data2
-			// 	radarcharts2.redraw(data);
-			// });
-			//////////////////////////////////////
 
-			// var radarcharts2 = new Radarcharts({
-			// 	renderTo: $("#container2"),
-			// 	size: "m",
-			// 	items: data1,
-			// 	maxValue: 100,
-			// 	config: { // optional
-			// 		title: {
-			// 			font: "bold 16px Microsoft Yahei",
-			// 			color: "red"
-			// 		},
-			// 		bg: {
-			// 			colors: ["#c4c5bd", "#809176", "#50a2c2"],
-			// 			num: 3,
-			// 			type: 0
-			// 		}
-			// 	}
-			// });
-			// $(".player-2").bind("click", function(){
-			// 	var id = $(this).attr("id"),
-			// 		data;
-			// 	if(id == "messi"){
-			// 		data = data1;
-			// 	} else {
-			// 		data = data2;
-			// 	}
-			// 	radarcharts2.drawBdr(data);
-			// });
-
-			// var radarcharts3 = new Radarcharts({
-			// 	renderTo: $("#container3"),
-			// 	size: "m",
-			// 	items: data3,
-			// 	config: { // optional
-			// 		title: {
-			// 			font: "bold 20px ",
-			// 			color: "black"
-			// 		},
-			// 		duration: 1000
-			// 	}
-			// });
-			// $(".player-3").bind("click", function(){
-			// 	var id = $(this).attr("id"),
-			// 		data;
-			// 	if(id == "messi"){
-			// 		data = data3;
-			// 	} else {
-			// 		data = data4;
-			// 	}
-			// 	radarcharts3.drawBdr(data);
-			// });
-
+		<script type="text/javascript">
 			function codeareaHandler(area){
 				area.each(function(){
 					var thisArea = $(this),
@@ -405,8 +621,6 @@ $(".player-3").bind("click", function(){
 				})
 			}
 			codeareaHandler($('body').find('pre'));
-
-
 		</script>
 		
 	</body>
