@@ -361,6 +361,7 @@
 			this.options.wrapper.appendChild(this.elem);
 
 			this.ctx = this.elem.getContext('2d');
+			this.ctx.translate(0.5, 0.5);
 			this.frameNum = Math.ceil(options.duration / FREQUENCY);
 			this.centerPoint = [this.size[0] / 2, this.size[1] / 2];
 			this.dataLength = options.series[0].data.length;
