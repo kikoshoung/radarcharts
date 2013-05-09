@@ -879,7 +879,7 @@
 		}
 	}
 
-	// export Chart Class for window object form this closure
+	// export Chart Class for window object from this closure
 	window.Radarcharts = Chart;
 
 	// export for jQuery coding style
