@@ -892,9 +892,4 @@
 			return new Radarcharts(options);
 		}
 	}
-
-})()
-
-
-
-
+})();
