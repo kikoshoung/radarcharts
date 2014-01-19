@@ -1,3 +1,6 @@
+/* Radarcharts - Canvas charts with radar impression
+ * @author kikoshoung (kikoshoung@gmail.com)
+ */
 (function(){
 	// some constant
 	var FREQUENCY = 20, // frequency of animation (HZ), [20 - 40] is recommended, in my opinion, 20HZ is smooth enough
