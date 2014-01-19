@@ -161,25 +161,25 @@ ul.nav li {
 .time-line-period .cont h2{
 	margin-bottom: 20px;
 }
-.i-v-worked-for{
+.company{
 	display: inline-block;
 	width: 80px;
 	height: 80px;
-	background-image: url(../img/i-v-worked-for.png);
+	background-image: url(../img/company.png);
 	background-color: #eff5f2;
 	background-repeat: no-repeat;
 	border-radius: 100px;
 }
-.i-v-worked-for.guohead{
+.company.guohead{
 	background-position: 0 0;
 }
-.i-v-worked-for.mixhui{
+.company.mixhui{
 	background-position: -80px 0;
 }
-.i-v-worked-for.cuc{
+.company.cuc{
 	background-position: -160px 0;
 }
-.i-v-worked-for.ago{
+.company.ago{
 	background-image: none;
 }
 
