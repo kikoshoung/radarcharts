@@ -1,4 +1,4 @@
-radarcharts
+Radarcharts
 ===========
 
 Canvas charts with radar impression.
