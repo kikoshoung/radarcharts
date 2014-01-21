@@ -10,7 +10,7 @@ module.exports = function(grunt) {
             },
             dist: {
                 files: {
-                    'minified/radarcharts.min.js': 'js/radarcharts.js'
+                    'js/radarcharts.min.js': 'js/radarcharts.js'
                 }
             }
         }

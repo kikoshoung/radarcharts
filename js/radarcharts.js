@@ -129,34 +129,38 @@
 	}
 
 	// clone an object deeply
-	var clone = function(original){
-		if(typeof original != 'object' || !original || original.nodeType) return original;
+	var clone = function(obj){
+		// If obj is not an Object instance, return it. Except null and DOM object.
+		if(typeof obj != 'object' || obj == null || obj.nodeType) return obj;
 
-		var clonedObject = original.constructor === Array ? [] : {};
+		var clonedObj = obj.constructor === Array ? [] : {};
 
-		for(var i in original){
-			clonedObject[i] = arguments.callee(original[i])
+		for(var prop in obj){
+			clonedObj[prop] = arguments.callee(obj[prop]);
 		}
 
-		return clonedObject;
+		return clonedObj;
 	}
 
-	// merge two objects 
-	var merge = function(master, defaults){
-		var merged = clone(defaults);
+	// extend origin object with default options object 
+	var extend = function(origin, options){
+		var extendedOpt = clone(options);
+			origin = origin || {};
+			options = options || {};
 
-		for(var j in master){
-			if(merged[j] instanceof Object && master[j]){
-				if(merged[j] instanceof Array){
-					merged[j] = clone(master[j]);
+		for(var prop in origin){
+			if(origin[prop] instanceof Object && !origin[prop].nodeType){
+				if(origin[prop] instanceof Array || origin[prop] instanceof Function){
+					extendedOpt[prop] = clone(origin[prop]);
 				} else {
-					merged[j] = arguments.callee(master[j], merged[j]);
+					extendedOpt[prop] = arguments.callee(origin[prop], extendedOpt[prop]);
 				}
 			} else {
-				merged[j] = master[j];
+				extendedOpt[prop] = origin[prop];
 			}
 		}
-		return merged;
+
+		return extendedOpt;
 	}
 
 	// get an array that contains vertices' position value
@@ -680,7 +684,7 @@
 
 	// Chart Class
 	var Chart = function(options){
-		this.options = merge(options || {}, CONFIG);
+		this.options = extend(options || {}, CONFIG);
 		validateParam(options);
 		this.init();
 	}
